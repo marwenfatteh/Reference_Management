@@ -7,9 +7,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client.TelemetryCore.TelemetryClient;
+using Microsoft.SqlServer.Server;
+using RestSharp;
 using System.IO;
 using System.IO.Pipes;
 using System.Security.Claims;
+using System.Security.Cryptography.Xml;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace identityLoginRegister.Controllers
@@ -35,8 +39,8 @@ namespace identityLoginRegister.Controllers
         [ProducesResponseType(400)]
         public async Task<IActionResult> CreateReferenceDocumentAsync(IFormFile file)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("File is not selected or empty.");
+            /*if (file == null || file.Length == 0)
+                return BadRequest("File is not selected or empty.");*/
 
             var user = await _userManager.GetUserAsync(HttpContext.User);
 
@@ -53,15 +57,41 @@ namespace identityLoginRegister.Controllers
 
 
             var referenceDocumentMap = _mapper.Map<ReferenceDocument>(refdoc);
+
+
+            var client = new RestClient("http://127.0.0.1:5000");
+            var request = new RestRequest("/ask", Method.Post)
+            {
+                AlwaysMultipartFormData = true
+            };
+
+            var options = new FileParameterOptions
+            {
+                DisableFilenameEncoding = true,
+                DisableFileNameStar = false
+            };
+
+            request.AddHeader("Content-Type", "multipart/form-data");
+            request.AddFile("file", refdoc.referenceDocument, refdoc.Title, "application/pdf");
+            request.AddParameter("Project", refdoc.Title); 
+            
+
+
             if (!_referenceDocumentRepository.CreateReferenceDocument(referenceDocumentMap))
             {
                 ModelState.AddModelError("", "sthg went wrong while saving");
                 return StatusCode(500, ModelState);
             }
+            request.AddParameter("Id", referenceDocumentMap.Id);
+            client.Post(request);
+            request.AddParameter("Id", referenceDocumentMap.Id);
+            client.Post(request);
             return Ok("success");
+            
         }
 
-        [Authorize]
+        
+
         [HttpGet("{Id}")]
         public async Task<IActionResult> GetReferenceDocument(string Id)
         {

@@ -206,7 +206,7 @@ namespace identityLoginRegister.Migrations
                     b.HasIndex("referenceDocumentId")
                         .IsUnique();
 
-                    b.ToTable("ExportedReferences");
+                    b.ToTable("ExportedReferences", (string)null);
                 });
 
             modelBuilder.Entity("identityLoginRegister.Models.ReferenceDocument", b =>
@@ -230,7 +230,7 @@ namespace identityLoginRegister.Migrations
 
                     b.HasIndex("userId");
 
-                    b.ToTable("ReferenceDocuments");
+                    b.ToTable("ReferenceDocuments", (string)null);
                 });
 
             modelBuilder.Entity("identityLoginRegister.Models.User", b =>
